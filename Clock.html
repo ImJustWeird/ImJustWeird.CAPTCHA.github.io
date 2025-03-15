@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock Roulette</title>
+    <style>
+        /* Basic styles for the clock */
+        .clock {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            border: 10px solid black;
+            border-radius: 50%;
+            margin: 100px auto;
+        }
+
+        .hand {
+            position: absolute;
+            width: 50%;
+            height: 2px;
+            background: red;
+            top: 50%;
+            transform-origin: 100%;
+            transition: transform 0.5s ease;
+        }
+
+        .minute-hand {
+            background: blue;
+            height: 2px;
+        }
+
+        .hour-hand {
+            background: orange;
+            height: 3px;
+        }
+
+        .center {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: black;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Style for the bold "CLOCK ROULETTE" label */
+        .title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        /* Style for the instruction label */
+        .instructions {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        /* Style for the button */
+        #rotate-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50; /* Green button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #rotate-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Style for the numbers around the clock */
+        .number {
+            position: absolute;
+            font-size: 16px;
+            font-weight: bold;
+            color: black;
+        }
+
+        .number-12 { top: 10px; left: 120px; }
+        .number-1 { top: 30px; left: 190px; }
+        .number-2 { top: 60px; left: 220px; }
+        .number-3 { top: 120px; left: 230px; }
+        .number-4 { top: 180px; left: 220px; }
+        .number-5 { top: 210px; left: 190px; }
+        .number-6 { top: 230px; left: 120px; }
+        .number-7 { top: 210px; left: 50px; }
+        .number-8 { top: 180px; left: 20px; }
+        .number-9 { top: 120px; left: 10px; }
+        .number-10 { top: 60px; left: 20px; }
+        .number-11 { top: 30px; left: 50px; }
+
+        /* Style for the dynamic time display */
+        #time-info {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title">CLOCK ROULETTE CAPTCHA</div>
+
+    <div class="instructions">
+        Set clock to your current time to prove you're human
+    </div>
+
+    <div class="clock">
+        <div class="hand hour-hand" id="hour-hand"></div> <!-- Hour hand -->
+        <div class="hand minute-hand" id="minute-hand"></div> <!-- Minute hand -->
+        <div class="center"></div>
+        <!-- Numbers around the clock -->
+        <div class="number number-12">12</div>
+        <div class="number number-1">1</div>
+        <div class="number number-2">2</div>
+        <div class="number number-3">3</div>
+        <div class="number number-4">4</div>
+        <div class="number number-5">5</div>
+        <div class="number number-6">6</div>
+        <div class="number number-7">7</div>
+        <div class="number number-8">8</div>
+        <div class="number number-9">9</div>
+        <div class="number number-10">10</div>
+        <div class="number number-11">11</div>
+    </div>
+
+    <button id="rotate-button">Rotate Hands</button>
+
+    <p id="time-info">Displayed Time: ???</p> <!-- Display the dynamic time -->
+
+    <script>
+        // JavaScript to randomly rotate hands and display dynamic time
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const timeInfo = document.getElementById('time-info');
+
+        // Synonyms for "almost" to display randomly
+        const almostSynonyms = [
+            "Almost", "Close to", "It's about", "It's nearly", "Just shy of", "Basically", "Practically",
+            "Roughly", "Around", "Not quite", "Approximately", "Just about", "Nearly", "In the ballpark of", 
+            "Not far from", "On the verge of", "Close enough to", "A little past", "Right around", 
+            "Just over", "Close by", "Nearly there", "On the cusp of", "Getting close to", "In the vicinity of", 
+            "Almost there", "Shy of", "More or less", "A hair off", "It's just under"
+        ];
+
+        let previousSynonym = "";
+
+        // Function to calculate hours from angle
+        const getHourFromAngle = (angle) => {
+            const normalizedAngle = angle % 360;
+            const hours = Math.floor(normalizedAngle / 30); // Each hour is 30 degrees (360° / 12 hours)
+            return hours;
+        };
+
+        // Function to calculate minutes from angle
+        const getMinuteFromAngle = (angle) => {
+            const normalizedAngle = angle % 360;
+            const minutes = Math.floor(normalizedAngle / 6); // Each minute is 6 degrees (360° / 60 minutes)
+            return minutes;
+        };
+
+        // Function to get a random synonym from the list (avoids repeating the last one)
+        const getRandomSynonym = () => {
+            let randomIndex;
+            let synonym;
+            do {
+                randomIndex = Math.floor(Math.random() * almostSynonyms.length);
+                synonym = almostSynonyms[randomIndex];
+            } while (synonym === previousSynonym);  // Avoid repeating the last synonym
+            previousSynonym = synonym;
+            return synonym;
+        };
+
+        document.getElementById('rotate-button').addEventListener('click', () => {
+            // Generate random rotation angles for the hands between 5 and 3600 degrees
+            const randomHourHandRotation = Math.floor(Math.random() * (3600 - 5 + 1)) + 5; // Random value between 5 and 3600
+            const randomMinuteHandRotation = Math.floor(Math.random() * (3600 - 5 + 1)) + 5; // Random value between 5 and 3600
+
+            // Apply the random rotations to the hands
+            hourHand.style.transform = `rotate(${randomHourHandRotation}deg)`;
+            minuteHand.style.transform = `rotate(${randomMinuteHandRotation}deg)`;
+
+            // Get the corresponding times based on the angle of the hands
+            const hour = getHourFromAngle(randomHourHandRotation);
+            const minute = getMinuteFromAngle(randomMinuteHandRotation);
+
+            // Format the time
+            const totalTime = `${hour}:${minute < 10 ? '0' + minute : minute}`;
+
+            // Get a random synonym for "almost"
+            const synonym = getRandomSynonym();
+
+            // Update the text with the combined time and the random synonym
+            timeInfo.textContent = `Displayed Time: (${synonym}) ${totalTime}`;
+        });
+    </script>
+
+</body>
+</html>
