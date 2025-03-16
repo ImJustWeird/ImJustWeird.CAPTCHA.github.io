@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clock Roulette</title>
+    <title>Clock Roulette Captcha</title>
     <style>
         /* Basic styles for the clock */
         .clock {
@@ -105,14 +105,79 @@
             font-size: 18px;
             margin-top: 20px;
         }
+
+        /* Style for the click counter */
+        #click-counter {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        /* Style for the "CRITICAL TIME" message */
+        #critical-time {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: red;
+            display: none;
+        }
+
+        /* Style for the GIF */
+        #gamba-gif {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: none;
+            width: 100px; /* Adjust the size of the gif */
+        }
+
+        /* Dropdown menu style */
+        #clock-hand-dropdown {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: none; /* Initially hidden */
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #clock-hand-dropdown select {
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        /* Price info */
+        #clock-hand-price {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Button to buy coins */
+        #buy-coins-button {
+            display: none; /* Initially hidden */
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #FF5722; /* Orange button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #buy-coins-button:hover {
+            background-color: #E64A19;
+        }
     </style>
 </head>
-<body>
+<body style="background-color:rgb(187, 187, 187);">
 
     <div class="title">CLOCK ROULETTE CAPTCHA</div>
 
     <div class="instructions">
-        Set clock to your current time to prove you're human
+        Align the time to prove you're human
     </div>
 
     <div class="clock">
@@ -134,76 +199,190 @@
         <div class="number number-11">11</div>
     </div>
 
-    <button id="rotate-button">Rotate Hands</button>
+    <button id="rotate-button">Spin!</button>
 
     <p id="time-info">Displayed Time: ???</p> <!-- Display the dynamic time -->
+    <p id="click-counter">Click/Spin Count: 0</p> <!-- Display the click counter -->
+    
+    <!-- Critical Time Message -->
+    <p id="critical-time">CRIT TIME X2</p>
+
+    <!-- GIF to show after 100 clicks -->
+    <img id="gamba-gif" src="https://media.tenor.com/4OYd5OlYR9wAAAAM/gamba-xqc.gif" alt="Gamba GIF" style="display:none; width:300px; height:auto;">
+
+    <!-- Dropdown to buy clock hands -->
+    <div id="clock-hand-dropdown">
+        <label for="clock-hand-select">Buy Clock Hand:</label>
+        <select id="clock-hand-select">
+            <option value="0.10" data-price="100">1x Hand (0.10 multiplier) - Price: 100 Coins</option>
+            <option value="0.20" data-price="200">2x Hands (0.20 multiplier) - Price: 200 Coins</option>
+            <option value="0.30" data-price="300">3x Hands (0.30 multiplier) - Price: 300 Coins</option>
+            <option value="0.40" data-price="400">4x Hands (0.40 multiplier) - Price: 400 Coins</option>
+            <option value="0.50" data-price="500">5x Hands (0.50 multiplier) - Price: 500 Coins</option>
+        </select>
+        <p id="clock-hand-price">You have 0 Coins</p>
+    </div>
+
+    <!-- Button to buy coins -->
+    <button id="buy-coins-button">Buy Coins (20 Clicks)</button>
 
     <script>
-        // JavaScript to randomly rotate hands and display dynamic time
         const hourHand = document.getElementById('hour-hand');
         const minuteHand = document.getElementById('minute-hand');
         const timeInfo = document.getElementById('time-info');
+        const clickCounter = document.getElementById('click-counter');
+        const criticalTimeMessage = document.getElementById('critical-time');
+        const gambaGif = document.getElementById('gamba-gif');
+        const clockHandDropdown = document.getElementById('clock-hand-dropdown');
+        const clockHandSelect = document.getElementById('clock-hand-select');
+        const clockHandPrice = document.getElementById('clock-hand-price');
+        const buyCoinsButton = document.getElementById('buy-coins-button');
+        
+        let clickCount = 0;
+        let coinCount = 0;
+        let multiplier = 0; // Initial multiplier (will increase with clock hands)
+        let totalClockHands = 0; // Count of clock hands purchased
+        let totalCoins = 0; // Track coins
+        let dropdownUnlocked = false; // Flag to check if dropdown is unlocked
 
-        // Synonyms for "almost" to display randomly
+        const criticalTimes = [
+            { hour: 1, minute: 0 },
+        ];
+
         const almostSynonyms = [
-            "Almost", "Close to", "It's about", "It's nearly", "Just shy of", "Basically", "Practically",
-            "Roughly", "Around", "Not quite", "Approximately", "Just about", "Nearly", "In the ballpark of", 
-            "Not far from", "On the verge of", "Close enough to", "A little past", "Right around", 
-            "Just over", "Close by", "Nearly there", "On the cusp of", "Getting close to", "In the vicinity of", 
-            "Almost there", "Shy of", "More or less", "A hair off", "It's just under"
+            "nearly", "just about", "on the verge of", "on the brink of", "bordering on", "a hair away", "scarcely", "within reach", "narrowly", "on the edge of", "approaching", "next to", "in the neighborhood of", "inching toward", "teetering on", "within an inch of", "barely", "skimming", "hovering near", "all but", "shy of", "a step away", "close to", "within a whisker of", "edging toward", "not quite", "about to", "just shy of", "creeping up on", "within striking distance", "nearing", "within grasp", "in spitting distance", "knocking on the door of", "Hey this is a secret message good job getting it. Why were you clicking so long? or maybe youre just lucky, i wouldnt know, but trust me theres no more secret messages. You addict", "heres a word to use in conversation to sound smart; Ephemeral – lasting a very short time ex.the vacation was fun but ephemeral", "this will never end will it?.. oh yeah! close"
         ];
 
         let previousSynonym = "";
 
-        // Function to calculate hours from angle
-        const getHourFromAngle = (angle) => {
-            const normalizedAngle = angle % 360;
-            const hours = Math.floor(normalizedAngle / 30); // Each hour is 30 degrees (360° / 12 hours)
-            return hours;
-        };
-
-        // Function to calculate minutes from angle
-        const getMinuteFromAngle = (angle) => {
-            const normalizedAngle = angle % 360;
-            const minutes = Math.floor(normalizedAngle / 6); // Each minute is 6 degrees (360° / 60 minutes)
-            return minutes;
-        };
-
-        // Function to get a random synonym from the list (avoids repeating the last one)
         const getRandomSynonym = () => {
             let randomIndex;
             let synonym;
             do {
                 randomIndex = Math.floor(Math.random() * almostSynonyms.length);
                 synonym = almostSynonyms[randomIndex];
-            } while (synonym === previousSynonym);  // Avoid repeating the last synonym
+            } while (synonym === previousSynonym);
             previousSynonym = synonym;
             return synonym;
         };
 
-        document.getElementById('rotate-button').addEventListener('click', () => {
-            // Generate random rotation angles for the hands between 5 and 3600 degrees
-            const randomHourHandRotation = Math.floor(Math.random() * (3600 - 5 + 1)) + 5; // Random value between 5 and 3600
-            const randomMinuteHandRotation = Math.floor(Math.random() * (3600 - 5 + 1)) + 5; // Random value between 5 and 3600
+        const getHourFromAngle = (angle) => {
+            const normalizedAngle = angle % 360;
+            return Math.floor(normalizedAngle / 30);
+        };
 
-            // Apply the random rotations to the hands
+        const getMinuteFromAngle = (angle) => {
+            const normalizedAngle = angle % 360;
+            return Math.floor(normalizedAngle / 6);
+        };
+
+        const teleportButton = () => {
+            const button = document.getElementById('rotate-button');
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const randomX = Math.random() * (screenWidth - button.offsetWidth);
+            const randomY = Math.random() * (screenHeight - button.offsetHeight);
+            button.style.position = 'absolute';
+            button.style.left = `${randomX}px`;
+            button.style.top = `${randomY}px`;
+        };
+
+        const getRandomColor = () => {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        };
+
+        document.getElementById('rotate-button').addEventListener('click', () => {
+            // Adjust the click count formula: 1 + multiplier * 0.1
+            let increment = 1 + (multiplier * 0.1);
+            if (criticalTimeMessage.style.display === 'block') {
+                increment *= 2; // Double the clicks during critical time
+            }
+
+            clickCount += increment;
+            clickCounter.textContent = `Click/Spin Count: ${clickCount.toFixed(2)}`;
+
+            teleportButton();
+
+            if (clickCount % 100 === 0) {
+                document.body.style.backgroundColor = getRandomColor(); // Change background color every 100 clicks
+            }
+
+            const randomHourHandRotation = Math.floor(Math.random() * (3600 - 5 + 1)) + 5;
+            const randomMinuteHandRotation = Math.floor(Math.random() * (3600 - 5 + 1)) + 5;
+
             hourHand.style.transform = `rotate(${randomHourHandRotation}deg)`;
             minuteHand.style.transform = `rotate(${randomMinuteHandRotation}deg)`;
 
-            // Get the corresponding times based on the angle of the hands
             const hour = getHourFromAngle(randomHourHandRotation);
             const minute = getMinuteFromAngle(randomMinuteHandRotation);
 
-            // Format the time
             const totalTime = `${hour}:${minute < 10 ? '0' + minute : minute}`;
+            const isCriticalTime = criticalTimes.some(time => time.hour === hour && time.minute === minute);
 
-            // Get a random synonym for "almost"
+            if (isCriticalTime) {
+                criticalTimeMessage.style.display = 'block';
+            } else {
+                criticalTimeMessage.style.display = 'none';
+            }
+
             const synonym = getRandomSynonym();
-
-            // Update the text with the combined time and the random synonym
             timeInfo.textContent = `Displayed Time: (${synonym}) ${totalTime}`;
+
+            if (clickCount === 100) {
+                gambaGif.style.display = 'block';
+                setTimeout(() => {
+                    gambaGif.style.display = 'none';
+                }, 5000);
+            }
+
+            if (clickCount >= 500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 && !dropdownUnlocked) {
+                clockHandDropdown.style.display = 'block';
+                buyCoinsButton.style.display = 'block'; // Show buy coins button after 500 clicks
+                dropdownUnlocked = true;
+            }
+
+            // Enable coins and buying items only after dropdown is unlocked
+            if (dropdownUnlocked) {
+                if (clickCount % 20 === 0) {
+                    coinCount++;
+                    clockHandPrice.textContent = `You have ${coinCount} Coins`;
+                }
+            }
+        });
+
+        clockHandSelect.addEventListener('change', (event) => {
+            const selectedValue = parseFloat(event.target.value);
+            const price = parseInt(event.selectedOptions[0].getAttribute('data-price'));
+
+            if (coinCount >= price) {
+                coinCount -= price;
+                multiplier = selectedValue;
+                totalClockHands += 1;
+
+                clockHandPrice.textContent = `You have ${coinCount} Coins`;
+                
+                // Create a new hand on the clock
+                const newHand = document.createElement('div');
+                newHand.classList.add('hand');
+                newHand.style.transform = `rotate(${(360 / (totalClockHands + 1)) * totalClockHands}deg)`;
+                document.querySelector('.clock').appendChild(newHand);
+            } else {
+                alert("Not enough coins to buy this!");
+            }
+        });
+
+        buyCoinsButton.addEventListener('click', () => {
+            if (coinCount >= 20) {
+                coinCount -= 20;
+                totalCoins += 20;
+                clockHandPrice.textContent = `You have ${totalCoins} Coins`;
+            }
         });
     </script>
-
 </body>
 </html>
